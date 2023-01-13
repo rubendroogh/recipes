@@ -30,6 +30,11 @@ export default function SingleRecipe(props: Recipe) {
             <ul>
                 {ingredientsJSX}
             </ul>
+            <br />
+            {
+                props.creator &&
+                <small>By {props.creator}</small>
+            }
             {/* <input ref={inputRef} style={{marginTop: 20}} onChange={personsChange} value={persons} type="number" /> */}
         </section>
     )

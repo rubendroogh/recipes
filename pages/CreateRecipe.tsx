@@ -1,12 +1,12 @@
-import { Chivo_Mono } from '@next/font/google'
-import { useRef, useState } from 'react';
+import { useContext, useRef, useState } from 'react';
 import styles from "../styles/CreateRecipe.module.css"
 import { DBCreateRecipe, Ingredient, Recipe } from '../database/RecipeRepository';
-
-const font = Chivo_Mono({})
+import { publish } from '../misc/events';
+import { UserContext } from '../misc/contexts'
 
 export default function CreateRecipe() {
     const [ingredients, setIngredients] = useState([{title: 'banaan', amount: 1, unit: 'stuks'}] as Ingredient[])
+    const user = useContext(UserContext)
 
     let titleRef = useRef<HTMLInputElement>(null)
     let newIngredientTitleRef = useRef<HTMLInputElement>(null)
@@ -17,15 +17,15 @@ export default function CreateRecipe() {
         e.preventDefault()
         
         const recipe = {
-            title: titleRef.current?.value ?? "",
-            ingredients: ingredients
+            title: titleRef.current?.value ?? '',
+            ingredients: ingredients,
+            creator: user?.email ?? 'Anonymous user'
         } as Recipe
 
         console.log('creating recipe!')
         DBCreateRecipe(recipe)
 
-        const event = new CustomEvent('createdRecipe');
-        document.dispatchEvent(event);
+        publish('createdRecipe')
     }
     
     const addIngredient: React.FormEventHandler<HTMLButtonElement> = (e: React.FormEvent<HTMLButtonElement>) => {

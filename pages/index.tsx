@@ -1,10 +1,12 @@
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
 import SingleRecipe from './Recipe'
+import CreateRecipe from './CreateRecipe'
 import { useEffect, useState } from 'react'
 import { DBGetRecipes, Recipe } from '../database/RecipeRepository'
-import CreateRecipe from './CreateRecipe'
 import { getAuth, GoogleAuthProvider, signInWithPopup, User } from "firebase/auth"
+import { subscribe } from '../misc/events'
+import { UserContext } from '../misc/contexts'
 
 export default function Home() {
   const [recipes, setRecipes] = useState([] as Recipe[])
@@ -16,17 +18,21 @@ export default function Home() {
     DBGetRecipes().then(result => {
       setRecipes(result)
     })
-    
-    document.addEventListener('createdRecipe', () => {
+
+    subscribe('createdRecipe', () => {
       DBGetRecipes().then(result => {
         setRecipes(result)
       })
     })
+
+    subscribe('closeCreateRecipe', () => {
+      setShowCreateRecipe(false)
+    })
   }, [])
 
   const authorize = () => {
-    const auth = getAuth();
-    const provider = new GoogleAuthProvider();
+    const auth = getAuth()
+    const provider = new GoogleAuthProvider()
     signInWithPopup(auth, provider).then((result) => {
       console.log('authorized!')
       setUser(result.user)
@@ -47,16 +53,18 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        <button onClick={authorize}>{isLoggedIn ? 'You are logged in!' : 'Login with Google'}</button>
-        {isLoggedIn &&
-          <button onClick={toggleCreateRecipe}>Create new recipe</button>
-        }
-        {showCreateRecipe &&
-          <CreateRecipe></CreateRecipe>
-        }
-        {recipes.map(recipe => 
-          <SingleRecipe {...recipe}></SingleRecipe>
-        )}
+        <UserContext.Provider value={user}>
+          <button onClick={authorize}>{isLoggedIn ? 'You are logged in!' : 'Login with Google'}</button>
+          {isLoggedIn &&
+            <button onClick={toggleCreateRecipe}>Create new recipe</button>
+          }
+          {showCreateRecipe &&
+            <CreateRecipe></CreateRecipe>
+          }
+          {recipes.map(recipe => 
+            <SingleRecipe {...recipe}></SingleRecipe>
+          )}
+        </UserContext.Provider>
       </main>
     </>
   )
